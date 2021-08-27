@@ -1,0 +1,94 @@
+pipeline {
+    agent any
+    // Scenario : 2대의 기존 VM을 Rolling Update 방식으로 무중단 배포 
+    // 기존 vm : 0001-2 , 신규 vm : 0003-4
+    environment {
+        oldvm1 = 'KRAZEDLAP0001'
+        oldvm2 = 'KRAZEDLAP0002'
+        newvm1 = 'KRAZEDLAP0003'
+        newvm2 = 'KRAZEDLAP0004'
+    }
+
+    tools {
+        // Install the Maven version configured as "M3" and add it to the path.
+        maven "M3"
+    }
+
+    stages {
+        stage('clone') {
+            steps {
+                // Git Url/ Credential 변경 필요
+                git credentialsId: 'jenkins-key' ,url:'git@github.com:DamianoPark/springsample.git'
+            }
+        }
+
+        stage('Build') {
+            steps{
+                // Run Maven on a Unix agent.
+                sh "mvn -Dmaven.test.failure.ignore=true clean package"
+                sh "ls -al target"
+                echo "Build Done"
+            }
+        }
+
+        stage('Create Azure Resource-1') {
+            steps{
+                // Azure 리소스 생성 - NIC / VM
+                sh "sh /var/lib/jenkins/workspace/Demo_Azure_Deploy/azurecli/CreateNicVM.sh ${newvm1}"
+                echo "Create VM Done"
+            }
+        }
+
+        stage('Deploy-1') {
+            steps{
+                // Build 결과물 Target 서버에 배포, 실행
+                sh "whoami"
+                sh "sh /var/lib/jenkins/workspace/Demo_Azure_Deploy/azurecli/DeployRun.sh ${newvm1}"
+                echo "Deploy Done"
+            }
+        }
+
+        stage('RollingUpdate-1') {
+            steps{
+                // 기존 VM1의 NIC 백엔드 풀에서 제거
+                sh "sh /var/lib/jenkins/workspace/Demo_Azure_Deploy/azurecli/RollingUpdate.sh ${oldvm1}"
+                echo "Rolling Update Done"
+            }
+        }
+
+
+        stage('Create Azure Resource-2') {
+            steps{
+                // Azure 리소스 생성 - NIC / VM
+                sh "sh /var/lib/jenkins/workspace/Demo_Azure_Deploy/azurecli/CreateNicVM.sh ${newvm2}"
+                echo "Create VM Done"
+            }
+        }
+
+        stage('Deploy-2') {
+            steps{
+                // Build 결과물 Target 서버에 배포, 실행
+                sh "whoami"
+                sh "sh /var/lib/jenkins/workspace/Demo_Azure_Deploy/azurecli/DeployRun.sh ${newvm2}"
+                echo "Deploy Done"
+            }
+        }
+
+        stage('RollingUpdate-2') {
+            steps{
+                // 기존 VM1의 NIC 백엔드 풀에서 제거
+                sh "sh /var/lib/jenkins/workspace/Demo_Azure_Deploy/azurecli/RollingUpdate.sh ${oldvm2}"
+                echo "Rolling Update Done"
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "### Stage Done ###"
+        }
+        failure {
+            echo "### Failure ###"
+        }
+    }    
+}
