@@ -1,0 +1,42 @@
+# Ansible Code
+# Deploy on Azure Portal Cloud Shell
+- hosts: localhost
+  connection: local
+  vars_files:
+    - ./vars.yml
+
+  tasks:
+  - name: Create virtual network inteface cards for VM 
+    azure_rm_networkinterface:
+      resource_group: "{{ resource_group }}"
+      name: "{{ network_interface_name }}"
+      virtual_network: "{{ virtual_network_name }}"
+      subnet: "{{ subnet_name }}"
+      ip_configurations: 
+        - name: ipconfig1 
+          load_balancer_backend_address_pools: "{{ load_balancer_backend_address_pools }}"
+          private_ip_address: "{{ private_ip_address }}"
+          private_ip_allocation_method: Static
+      location: "{{location }}"
+      create_with_security_group: False
+
+  - name: Create VM using shared image
+    azure_rm_virtualmachine:
+      resource_group: "{{ resource_group }}"
+      location : "{{ location }}"
+      name: "{{ vm_name }}"
+      vm_size: Standard_DS1_v2
+      admin_username: azure-admin
+      admin_password: P@ssw0rd12#$
+      managed_disk_type: Standard_LRS
+      custom_data : 
+        - ./cloud-config.yml
+      image:
+        id: "/subscriptions/29a28103-0f1a-4a95-906b-dac1ea3472aa/resourceGroups/{{ resource_group_image }}/providers/Microsoft.Compute/galleries/{{ shared_gallery_name }}/images/{{ shared_image_name }}/versions/{{ shared_image_version }}"
+      network_interface_names : "{{ network_interface_name }}"
+      virtual_network_name : "{{virtual_network_name}}"
+      subnet_name : "{{ subnet_name }}"
+      location : "{{ location }}"
+
+
+

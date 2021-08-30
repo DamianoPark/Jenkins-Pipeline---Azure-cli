@@ -1,0 +1,15 @@
+resource_group: Jenkins-rg
+resource_group_image : AIAdevops-rg
+location: koreacentral
+virtual_network_name: Jenkins-rg-vnet
+subnet_name: myBackendSubnet
+
+network_interface_name: nic-RHEL8
+load_balancer_backend_address_pools : /subscriptions/29a28103-0f1a-4a95-906b-dac1ea3472aa/resourceGroups/Jenkins-rg/providers/Microsoft.Network/loadBalancers/myLoadBalancer/backendAddressPools/DeployBackendPool
+private_ip_address : 172.17.1.10
+
+shared_gallery_name: RHEL_image
+shared_image_name: RHEL-8-gen1
+shared_image_version: 0.0.1
+
+vm_name: vm-RHEL8

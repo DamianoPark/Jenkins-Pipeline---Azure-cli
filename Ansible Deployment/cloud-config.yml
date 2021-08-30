@@ -1,0 +1,19 @@
+#cloud-config
+users:
+  - default
+  - name: jenkins
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh-authorized-keys: # 변경 필요
+      - ssh-rsa 
+      
+  - name: azure-admin
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh-authorized-keys:
+      - ssh-rsa 
+
+packages:
+  - openjdk-11-jdk
